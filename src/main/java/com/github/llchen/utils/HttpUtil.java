@@ -23,6 +23,48 @@ public class HttpUtil {
         pool.setMaxWaitMillis(2000);
     }
 
+
+    public static String doGet(String url, Map<String, Object> params) {
+
+        StringBuilder sb = new StringBuilder(url);
+        if (params != null) {
+            if (!url.contains("?")) {
+                sb.append("?");
+            } else {
+                if (!url.endsWith("?")) {
+                    sb.append("&");
+                }
+            }
+
+            for (Map.Entry<String, Object> entry : params.entrySet()) {
+                sb.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
+            }
+            sb.deleteCharAt(sb.length() - 1);
+        }
+
+        Request request = new Request.Builder()
+                .url(sb.toString())
+                .get()
+                .build();
+
+        String res = null;
+        OkHttpClient client = null;
+        try {
+            client = pool.getClient();
+            Response response = client.newBuilder()
+                    .readTimeout(5, TimeUnit.SECONDS)
+                    .build()
+                    .newCall(request)
+                    .execute();
+            res = response.body().string();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            pool.returnClient(client);
+        }
+        return res;
+    }
+
     /**
      * 上传文件和参数
      *
@@ -64,8 +106,6 @@ public class HttpUtil {
                 .build()
                 .newCall(request)
                 .enqueue(callback);
-
-
     }
 
 
@@ -119,5 +159,11 @@ public class HttpUtil {
         }
 
         return res;
+    }
+
+
+    public static void main(String[] args) {
+        String s = doGet("https://blog.csdn.net/xx326664162/article/details/77714123", null);
+        System.out.println(s);
     }
 }
